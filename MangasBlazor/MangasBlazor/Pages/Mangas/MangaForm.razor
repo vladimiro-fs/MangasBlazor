@@ -1,0 +1,205 @@
+﻿<EditForm Model="Manga" OnValidSubmit="@OnValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group row">
+        <div class="col-sm-8">
+            <label form="title">Title: </label>
+            <div>
+                <InputText @bind-value="Manga.Title" class="form-control" />
+                <ValidationMessage For="@(() => @Manga.Title)" />
+            </div>
+            <label form="author">Author: </label>
+            <div>
+                <InputText @bind-value="Manga.Author" class="form-control" />
+                <ValidationMessage For="@(() => @Manga.Author )" />
+            </div>
+            <label form="description">Description: </label>
+            <div>
+                <InputTextArea @bind-value="Manga.Description" rows="4" class="form-control" />
+                <ValidationMessage For="@(() => @Manga.Description)" />
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="enlarge-onhover">
+                <ImagePhoto RemoteImage="@Manga.Image" />
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-sm-4">
+            <label form="publisher">Publisher: </label>
+            <InputSelect @bind-value="Manga.Publisher" class="form-control">
+                @foreach (var publisher in Enum.GetValues(typeof(Publisher)))
+                {
+                    <option value="@publisher">@publisher</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => @Manga.Publisher)" />
+        </div>
+        <div class="col-sm-4">
+            <label form="format">Format: </label>
+            <InputText @bind-value="Manga.Format" class="form-control" />
+            <ValidationMessage For="@(() => Manga.Format)" />
+        </div>
+        <div class="col-sm-4">
+            <label form="pages">Pages: </label>
+            <InputNumber @bind-value="Manga.Pages" class="form-control" />
+            <ValidationMessage For="@(() => @Manga.Pages)" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-sm-4">
+            <label form="publish date">Publish Date: </label>
+            <InputDate @bind-value="Manga.PublishDate" class="form-control" />
+            <ValidationMessage For="@(() => @Manga.PublishDate)" />
+        </div>
+        <div class="col-sm-4">
+            <label form="origin">Origin: </label>
+            <InputSelect @bind-value="Manga.Origin" class="form-control">
+                @foreach (var origin in Enum.GetValues(typeof(Origin)))
+                {
+                    <option value="@origin">@origin</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => @Manga.Origin)" />
+        </div>
+        <div class="col-sm-4">
+            <label form="color">Color: </label>
+            <InputSelect @bind-value="Manga.Color" class="form-control">
+                @foreach (var color in Enum.GetValues(typeof(Color)))
+                {
+                    <option value="@color">@color</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => @Manga.Color)" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-sm-4">
+            <label form="price">Price: </label>
+            <InputNumber @bind-value="Manga.Price" class="form-control" />
+            <ValidationMessage For="@(() => @Manga.Price)" />
+        </div>
+        <div class="col-sm-4">
+            <label form="stock">Stock: </label>
+            <InputNumber @bind-value="Manga.Stock" class="form-control" />
+            <ValidationMessage For="@(() => @Manga.Stock)" />
+        </div>
+        <div class="col-sm-4">
+            <label form="category">Category</label>
+            <select @onchange="CategorySelectionChanged" class="form-control">
+                @if (categories != null)
+                {
+                    @foreach (var category in categories)
+                    {
+                        <option value="@category.Id" 
+                        selected="@(category.Id == Manga.CategoryId ? true : false)">
+                            @category.Name
+                        </option>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="col-sm-12">
+        <label form="image">Image: </label>
+        <InputText @bind-value="Manga.Image" class="form-control" />
+        <ValidationMessage For="@(() => @Manga.Image)" />
+    </div>
+
+    <div class="form-group row mt-2">
+        <InputFile OnChange="@LoadImage"></InputFile>
+    </div>
+
+    <button type="submit" class="btn btn-success mt-2">
+        @BtnSubmitText
+    </button>
+
+    <button class="btn btn-danger mt-2" 
+    @onclick="@(() => navigation.NavigateTo("Mangas"))">
+        @BtnCancelText
+    </button>
+
+</EditForm>
+
+@code {
+
+    List<CategoryDTO>? categories;
+    private StreamContent? fileContent;
+    private string? fileName;
+    private string? imageUrl;
+    private string? imageType;
+    long maxFileSize = 1024 * 500;
+    private string apiImages = "https://localhost:7216/images/";
+
+    [Inject]
+    private NavigationManager? navigation { get; set; }
+
+    [Inject]
+    private ICategoryService? _categoryService { get; set;  }
+
+    [Inject]
+    private IHttpClientFactory? http { get; set; }
+
+    [Parameter]
+    public MangaDTO? Manga { get; set; }
+
+    [Parameter]
+    public string BtnSubmitText { get; set; } = "Save";
+
+    [Parameter]
+    public string BtnCancelText { get; set; } = "Cancel";
+
+    [Parameter]
+    public EventCallback OnValidSubmit { get; set; }
+
+    [Parameter]
+    public string? RemoteImage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Manga.Image = null;
+        await LoadCategories();
+        if (Manga.CategoryId  == 0)
+        {
+            Manga.CategoryId = categories[0].Id;
+        }
+    }
+
+    private async Task<IEnumerable<CategoryDTO>> LoadCategories()
+    {
+        categories = await _categoryService.GetCategories();
+        return categories;
+    }
+
+    void CategorySelectionChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value.ToString(), out int id))
+        {
+            Manga.CategoryId = id;
+        }
+    }
+
+    async Task LoadImage(InputFileChangeEventArgs e)
+    {
+        fileContent = new StreamContent(e.File.OpenReadStream(maxFileSize));
+        // reads archive name
+        fileName = e.File.Name;
+        Manga.Image = apiImages + fileName;
+
+        var fileSize = new byte[e.File.Size];
+        // reads bytes in sequence
+        await e.File.OpenReadStream().ReadAsync(fileSize);
+        // reads content type
+        imageType = e.File.ContentType;
+        // url creation
+        imageUrl = $"data: {imageType}; base64, {Convert.ToBase64String(fileSize)}";
+        
+        this.StateHasChanged();
+    }
+}

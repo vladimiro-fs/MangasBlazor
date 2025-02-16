@@ -1,0 +1,24 @@
+﻿<div>
+    @if (RemoteImage != null)
+    {
+        <div>
+            <div style="margin:10px;">
+                <img src="@RemoteImage" style="width:150px;" />
+            </div>
+        </div>
+    }
+    else
+    {
+        <div>
+            <div style="margin:10px;">
+                <img src="/images/nophoto.jpg" style="width:150px;" />
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? RemoteImage { get; set; }
+
+}

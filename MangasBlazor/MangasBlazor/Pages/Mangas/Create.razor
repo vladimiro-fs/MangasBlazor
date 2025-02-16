@@ -1,0 +1,28 @@
+﻿@page "/manga/create"
+@inject IMangaService _mangaService
+@inject NavigationManager navigation
+
+<h2>New Manga</h2>
+
+<MangaForm Manga="@manga" OnValidSubmit="CreateManga" 
+BtnSubmitText="Save" 
+BtnCancelText="Cancel">
+</MangaForm>
+
+@code {
+
+    private MangaDTO manga = new MangaDTO();
+
+    async Task CreateManga()
+    {
+        try
+        {
+            await _mangaService.CreateMangas(manga);
+            navigation.NavigateTo("mangas");
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+}
