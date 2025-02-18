@@ -16,6 +16,9 @@
         private MangaDTO? manga;
         private List<MangaDTO>? mangas;
 
+        private int totalPageAmount;
+        private MangaPaginationResponseDTO? responsePaginationDto;
+
         public MangaService(IHttpClientFactory httpClientFactory, ILogger logger)
         {
             _httpClientFactory = httpClientFactory;
@@ -142,6 +145,38 @@
             }
 
             return mangaUpdated;
+        }
+
+        public async Task<MangaPaginationResponseDTO> GetMangaPagination(int page, int amountPerPage)
+        {
+            var path = $"pagination?page={page}&amountPerPage={amountPerPage}";
+            var apiUrl = apiEndpoint + path;
+
+            try
+            {
+                var httpClient = _httpClientFactory.CreateClient("MangasAPI");
+                var httpResponse = await httpClient.GetAsync(apiUrl);
+
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    var responseString = await httpResponse.Content.ReadAsStringAsync();
+                    responsePaginationDto = JsonSerializer
+                        .Deserialize<MangaPaginationResponseDTO>(responseString, _options);
+                    totalPageAmount = responsePaginationDto.TotalPages;
+                    mangas = responsePaginationDto.Mangas;
+                }
+                else
+                {
+                    _logger.LogWarning("The API request failed with status: " + httpResponse.StatusCode);
+                }
+
+                return responsePaginationDto;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error accessing mangas: {apiEndpoint}/pagination" + ex.Message);
+                throw new UnauthorizedAccessException();
+            }
         }
     }
 }

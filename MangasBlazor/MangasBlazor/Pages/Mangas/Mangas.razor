@@ -46,9 +46,16 @@ else
     <div>Do you really want to delete this item?</div>
 </Confirm>
 
+<Pagination totalPageAmount="totalPageAmount" currentPage="currentPage" 
+            radius="3" selectedPage="SelectedPage">
+</Pagination>
+
 @code {
     private IEnumerable<MangaDTO> mangas = new List<MangaDTO>();
     private string? errorMessage = "Unable to access mangas";
+    private MangaPaginationResponseDTO mangaPaginationDto = new MangaPaginationResponseDTO();
+    private int totalPageAmount;
+    private int currentPage = 1;
 
     Confirm? confirm;
     int mangaCode;
@@ -69,15 +76,17 @@ else
         }
     }
 
-    protected async Task LoadMangas()
+    async Task LoadMangas(int page = 1, int amountPerPage = 3)
     {
         try
         {
-            mangas = await _mangaService.GetMangas();
+            mangaPaginationDto = await _mangaService.GetMangaPagination(page, amountPerPage);
+            mangas = mangaPaginationDto.Mangas;
+            totalPageAmount = mangaPaginationDto.TotalPages;
         }
         catch (Exception)
         {
-            throw;
+            NavigationManager.NavigateTo("unauthorized");
         }
     }
 
@@ -97,5 +106,11 @@ else
         await _mangaService.DeleteManga(mangaCode);
         confirm.Hide();
         await LoadMangas();
+    }
+
+    private async Task SelectedPage(int page)
+    {
+        currentPage = page;
+        await LoadMangas(page);
     }
 }
