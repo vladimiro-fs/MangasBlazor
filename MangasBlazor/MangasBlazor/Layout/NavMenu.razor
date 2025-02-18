@@ -24,6 +24,17 @@
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Categories
             </NavLink>
         </div>
+        <AuthorizeView>
+            <Authorized>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="fileuploader">
+                        <span class="oi oi-cloud-upload" aria-hidden="true"></span> Send files
+                    </NavLink>
+                </li>
+            </Authorized>
+            <NotAuthorized>
+            </NotAuthorized>
+        </AuthorizeView>
     </nav>
 </div>
 

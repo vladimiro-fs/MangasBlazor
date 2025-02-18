@@ -31,7 +31,7 @@
                     <td>@manga.Publisher</td>
                     <td>@manga.Price</td>
                     <td><a class="btn btn-primary" href="manga/edit/@manga.Id">Edit</a></td>
-                    <td><a class="btn btn-danger">Delete</a></td>
+                    <td><a class="btn btn-danger" @onclick="@(() => Delete(manga.Id))" style="color: white">Delete</a></td>
                 </tr>
             }
         </tbody>
@@ -42,9 +42,16 @@ else
     <DisplayMessage ErrorMessage="@errorMessage" />
 }
 
+<Confirm @ref="confirm" onCancel="CancelConfirm" onConfirm="ConfirmDelete">
+    <div>Do you really want to delete this item?</div>
+</Confirm>
+
 @code {
     private IEnumerable<MangaDTO> mangas = new List<MangaDTO>();
     private string? errorMessage = "Unable to access mangas";
+
+    Confirm? confirm;
+    int mangaCode;
 
     protected override async Task OnInitializedAsync()
     {
@@ -72,5 +79,23 @@ else
         {
             throw;
         }
+    }
+
+    void Delete(int id)
+    {
+        confirm.Show();
+        mangaCode = id;
+    }
+
+    void CancelConfirm()
+    {
+        confirm.Hide();
+    }
+
+    async Task ConfirmDelete()
+    {
+        await _mangaService.DeleteManga(mangaCode);
+        confirm.Hide();
+        await LoadMangas();
     }
 }

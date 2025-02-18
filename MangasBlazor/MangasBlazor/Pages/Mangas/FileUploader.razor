@@ -1,0 +1,95 @@
+﻿@page "/fileuploader"
+@inject IFileUploadService _fileUploader
+
+<h3>Send files to the server</h3>
+
+<p>
+    Select up to 3 files: <InputFile OnChange="@SelectFile" multiple />
+</p>
+<p>
+    Max file size: 100KB (1024 * 100)
+</p>
+
+@if (filesName.Count > 0)
+{
+    <ul>
+        @foreach (var fileName in filesName)
+        {
+            <li>File/Size: @fileName </li>
+        }
+    </ul>
+}
+
+@if (uploadsResult.Count > 0)
+{
+    <div class="card">
+        <div class="card-body" btn-success>
+            <ul>
+                @foreach (var file in uploadsResult)
+                {
+                    <li>
+                        @if (file.ErrorCode == 0)
+                        {
+                            <b>
+                                Sent: @file.FileName
+                            </b>
+                        }
+                        else
+                        {
+                            <i>
+                                Not sent: @file.FileName
+                                (Error: @file.ErrorCode)
+                            </i>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+}
+
+@code {
+    private int maxFilesNumber = 3;
+    private long maxFileSize = long.MaxValue;
+    private List<string> filesName = new();
+    private List<UploadResult> uploadsResult = new();
+    private const string apiEndpoint = "/FileUpload/upload";
+
+    private async Task SelectFile(InputFileChangeEventArgs e)
+    {
+        using var content = new MultipartFormDataContent();
+
+        foreach (var file in e.GetMultipleFiles(maxFilesNumber))
+        {
+            var fileContent = new StreamContent(file.OpenReadStream(maxFileSize));
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+
+            filesName.Add($"{file.Name} - {file.Size} bytes");
+
+            content.Add(
+                content: fileContent,
+                name: "\"files\"",
+                fileName: file.Name);
+        }
+
+        try
+        {
+            var response = await _fileUploader.UploadFileAsync(apiEndpoint, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var newUploadResult = await response.Content
+                        .ReadFromJsonAsync<List<UploadResult>>();
+
+                if (newUploadResult is not null)
+                {
+                    uploadsResult = uploadsResult.Concat(newUploadResult).ToList();
+                }
+            }
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+}

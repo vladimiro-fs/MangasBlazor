@@ -1,0 +1,27 @@
+﻿@page "/manga/edit/{mangaId:int}"
+@inject IMangaService _mangaService
+@inject NavigationManager navigation
+
+<MangaForm Manga="@manga" OnValidSubmit="EditManga" 
+                          BtnSubmitText="Save" 
+                          BtnCancelText="Cancel">
+</MangaForm>
+
+@code {
+
+    private MangaDTO manga = new MangaDTO();
+
+    [Parameter]
+    public int mangaId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        manga = await _mangaService.GetManga(mangaId);
+    }
+
+    async Task EditManga()
+    {
+        await _mangaService.UpdateManga(mangaId, manga);
+        navigation.NavigateTo("mangas");
+    }
+}
