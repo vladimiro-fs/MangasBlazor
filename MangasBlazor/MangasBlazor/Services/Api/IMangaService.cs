@@ -14,7 +14,7 @@
 
         Task<bool> DeleteManga(int id);
 
-        Task<IEnumerable<MangaDTO>> GetMangaByCategory(int categoryId);
+        Task<IEnumerable<MangaDTO>> GetMangasByCategory(int categoryId);
 
         Task<MangaPaginationResponseDTO> GetMangaPagination(int page, int amountPerPage);
     }

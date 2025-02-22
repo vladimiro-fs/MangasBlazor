@@ -104,9 +104,33 @@
             }
         }
 
-        public Task<IEnumerable<MangaDTO>> GetMangaByCategory(int categoryId)
+        public async Task<IEnumerable<MangaDTO>> GetMangasByCategory(int categoryId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var httpClient = _httpClientFactory.CreateClient("MangasAPI");
+                var response = await httpClient.GetAsync(apiEndpoint + "getmangasbycategory/" + categoryId);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<IEnumerable<MangaDTO>>();
+                }
+                else
+                {
+                    var message = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"Error getting manga from category id={categoryId} - {message}");
+                    throw new Exception($"Status code: {response.StatusCode} - {message}");
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw new UnauthorizedAccessException();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting mangas from category id ={categoryId} \n\n {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<IEnumerable<MangaDTO>> GetMangas()

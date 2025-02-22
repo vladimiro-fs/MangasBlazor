@@ -1,0 +1,53 @@
+﻿@page "/MangasByCategory/{categoryId:int}"
+@inject IMangaService mangaService
+
+@if (mangasDto == null && errorMessage == null)
+{
+    <Spinner />
+}
+else if (errorMessage != null)
+{
+    <DisplayMessage ErrorMessage="@errorMessage" />
+    errorMessage = null;
+}
+else
+{
+    <h3>Mangas (@categoryName)</h3>
+
+    @if (mangasDto.Count() > 0)
+    {
+        <div class="row mt-6">
+            <ShowMangas Mangas="@mangasDto"></ShowMangas>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public int categoryId { get; set; }
+
+    public IEnumerable<MangaDTO>? mangasDto { get; set; }
+    public string? categoryName { get; set; }
+    public string? errorMessage { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            mangasDto = await mangaService.GetMangasByCategory(categoryId);
+
+            if (mangasDto != null && mangasDto.Count() > 0)
+            {
+                var mangaDto = mangasDto.FirstOrDefault(p => p.CategoryId == categoryId);
+
+                if (mangaDto != null)
+                {
+                    categoryName = mangaDto.Category.Name;
+                }
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Category not found";
+        }
+    }
+}

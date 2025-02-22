@@ -66,6 +66,8 @@
         [Range(1, 999)]
         public int Stock { get; set; }
 
+        public CategoryDTO? Category { get; set; }
+
         [DisplayName("Categories")]
         public int CategoryId { get; set; }
     }

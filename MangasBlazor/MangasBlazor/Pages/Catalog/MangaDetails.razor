@@ -1,0 +1,74 @@
+﻿@page "/MangaDetails/{Id:int}"
+
+@if (manga == null && errorMessage == null)
+{
+    <Spinner />
+}
+else if (errorMessage != null)
+{
+    <DisplayMessage ErrorMessage="@errorMessage" />
+}
+else
+{
+    <h3 class="mb-5">Manga Details</h3>
+    <div class="row">
+        <div class="col-md-3 mb-3">
+            <img class="figure-img" src="@manga.Image" width="220" height="350" />
+        </div>
+        <div class="col-md-9">
+            <p class="mb-3">
+                <h3>@manga.Title</h3>
+            </p>
+            <p>&nbsp;@manga.Description</p>
+            <p>&nbsp;@manga.Author</p>
+            <p>&nbsp;@manga.Publisher</p>
+            <p>&nbsp;@manga.Origin</p>
+            <p>&nbsp;@manga.Format</p>
+            <p>&nbsp;@manga.Pages</p>
+            <p>&nbsp;@manga.PublishDate</p>
+            <p>@manga.Price.ToString("C")&nbsp;(@manga.Stock items in stock)</p>
+            <div>
+                <button class="btn btn-success">
+                    Add to Cart
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Inject] IMangaService? mangaService { get; set; }
+    [Inject] NavigationManager navigationManager { get; set; }
+
+    [Parameter] public int id { get; set; }
+    public MangaDTO? manga { get; set; }
+    public string? errorMessage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            manga = await GetMangaById(id);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            navigationManager.NavigateTo("/unauthorized");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private async Task<MangaDTO> GetMangaById(int id)
+    {
+        var mangasDto = await mangaService.GetManga(id);
+
+        if (mangasDto != null)
+        {
+            return mangasDto;
+        }
+
+        return null;
+    }
+}
